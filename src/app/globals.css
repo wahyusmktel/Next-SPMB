@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom Font */
+  --font-family-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Primary Colors */
+  --color-primary-50: #e6f0f3;
+  --color-primary-100: #cce1e7;
+  --color-primary-200: #99c3cf;
+  --color-primary-300: #66a5b7;
+  --color-primary-400: #33879f;
+  --color-primary-500: #296374;
+  --color-primary-600: #214f5c;
+  --color-primary-700: #193b45;
+  --color-primary-800: #10272e;
+  --color-primary-900: #081317;
+  --color-primary: #296374;
+
+  /* Secondary Colors */
+  --color-secondary-50: #f0f7f9;
+  --color-secondary-100: #e1eff2;
+  --color-secondary-200: #c3dfe5;
+  --color-secondary-300: #a5cfd8;
+  --color-secondary-400: #87bfcb;
+  --color-secondary-500: #629FAD;
+  --color-secondary-600: #4e7f8a;
+  --color-secondary-700: #3b5f68;
+  --color-secondary-800: #273f45;
+  --color-secondary-900: #142023;
+  --color-secondary: #629FAD;
+
+  /* Tertiary Colors */
+  --color-tertiary-50: #e8ecee;
+  --color-tertiary-100: #d1d9dd;
+  --color-tertiary-200: #a3b3bb;
+  --color-tertiary-300: #768d99;
+  --color-tertiary-400: #486777;
+  --color-tertiary-500: #233D4D;
+  --color-tertiary-600: #1c313e;
+  --color-tertiary-700: #15252e;
+  --color-tertiary-800: #0e181f;
+  --color-tertiary-900: #070c0f;
+  --color-tertiary: #233D4D;
+}
+
+/* Base Styles */
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #233D4D;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --ring: #296374;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --border: #334155;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  /* Gradients */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #296374 0%, #629FAD 100%);
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #233D4D 0%, #296374 100%);
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, #629FAD 0%, #296374 100%);
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #296374 0%, #629FAD 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(35, 61, 77, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Skeleton Shimmer */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 0%,
+      #e2e8f0 50%,
+      var(--muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Focus Ring */
+  .focus-ring {
+    outline: none;
+    ring: 2px solid var(--ring);
+    ring-offset: 2px;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: var(--muted);
+    border-radius: 3px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: #296374;
+    border-radius: 3px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: #629FAD;
+  }
+}
+
+/* Animation Classes */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  .animate-bounce-soft {
+    animation: bounceSoft 2s infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2s infinite;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes bounceSoft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+}
