@@ -13,10 +13,10 @@ export interface User {
     role: UserRole;
     avatar?: string;
     phone?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    lastLoginAt?: Date;
-    isActive: boolean;
+    created_at: string;
+    updated_at: string;
+    last_login_at?: string;
+    is_active: boolean;
 }
 
 export interface Session {
@@ -40,13 +40,14 @@ export interface Dinas {
     telepon: string;
     email: string;
     website?: string;
-    logoDinas: string;
-    logoKabupaten: string;
-    kepalaDinas: string;
-    nipKepalaDinas: string;
-    ttdDigital?: string;
-    createdAt: Date;
-    updatedAt: Date;
+    logo_dinas?: string;
+    logo_kabupaten?: string;
+    signature_url?: string;
+    kepala_dinas: string;
+    nip_kepala_dinas: string;
+    notification_settings?: any;
+    created_at: string;
+    updated_at: string;
 }
 
 // ============================================
@@ -57,7 +58,7 @@ export type Jenjang = "SD" | "SMP";
 
 export interface Sekolah {
     id: string;
-    dinasId: string;
+    dinas_id: string;
     npsn: string;
     name: string;
     jenjang: Jenjang;
@@ -67,19 +68,16 @@ export interface Sekolah {
     telepon: string;
     email: string;
     website?: string;
-    koordinat: {
-        lat: number;
-        lng: number;
-    };
-    logo: string;
-    kepalaSekolah: string;
-    nipKepalaSekolah: string;
-    ketuaSpmb: string;
-    ttdDigital?: string;
-    akreditasi: string;
+    lat?: number;
+    lng?: number;
+    logo?: string;
+    kepala_sekolah: string;
+    nip_kepala_sekolah: string;
+    ketua_spmb: string;
+    akreditasi?: string;
     status: "negeri" | "swasta";
-    createdAt: Date;
-    updatedAt: Date;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Kuota {
@@ -103,9 +101,9 @@ export interface Jalur {
     type: JalurType;
     description: string;
     persyaratan: string[];
-    berkasWajib: string[];
-    radiusZonasi?: number; // in km, only for zonasi
-    isActive: boolean;
+    berkas_wajib: string[];
+    radius_zonasi?: number;
+    is_active: boolean;
     order: number;
 }
 
@@ -115,14 +113,14 @@ export interface Jalur {
 
 export interface TahunAjaran {
     id: string;
-    tahun: string; // e.g., "2026/2027"
-    isActive: boolean;
-    tanggalMulaiPendaftaran: Date;
-    tanggalAkhirPendaftaran: Date;
-    tanggalSeleksi: Date;
-    tanggalPengumuman: Date;
-    tanggalDaftarUlang: Date;
-    tanggalAkhirDaftarUlang: Date;
+    tahun: string;
+    is_active: boolean;
+    tanggal_mulai_pendaftaran: string;
+    tanggal_akhir_pendaftaran: string;
+    tanggal_seleksi: string;
+    tanggal_pengumuman: string;
+    tanggal_daftar_ulang: string;
+    tanggal_akhir_daftar_ulang: string;
 }
 
 // ============================================
@@ -201,18 +199,18 @@ export interface Pendaftaran {
     sekolahId: string;
     jalurId: string;
     tahunAjaranId: string;
-    noPendaftaran: string;
+    no_pendaftaran: string;
     status: StatusPendaftaran;
-    jarakKeSekolah?: number; // in km
-    nilaiRata?: number;
-    skorZonasi?: number;
-    skorPrestasi?: number;
-    createdAt: Date;
-    updatedAt: Date;
-    submittedAt?: Date;
-    verifiedAt?: Date;
-    verifiedBy?: string;
-    rejectReason?: string;
+    jarak_ke_sekolah?: number; // in km
+    nilai_rata?: number;
+    skor_zonasi?: number;
+    skor_prestasi?: number;
+    created_at: string;
+    updated_at: string;
+    submitted_at?: string;
+    verified_at?: string;
+    verified_by?: string;
+    reject_reason?: string;
 }
 
 // ============================================

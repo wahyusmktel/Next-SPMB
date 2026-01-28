@@ -4,4 +4,5 @@ export { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 export { Input, inputVariants } from "./input";
 export { Badge, badgeVariants } from "./badge";
 export { Modal, ConfirmDialog } from "./modal";
-export { Select, MultiSelect } from "./select";
+export { MultiSelect, Select } from "./select";
+export { ToastContainer } from "./toast-container";

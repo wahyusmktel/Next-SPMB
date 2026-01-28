@@ -15,6 +15,8 @@ import type {
     Notifikasi,
     Tiket,
 } from "@/data/types";
+import { api } from "./api";
+
 
 // ============================================
 // Auth Store
@@ -27,6 +29,7 @@ interface AuthState {
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
     setUser: (user: User) => void;
+    checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -37,67 +40,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     login: async (email: string, password: string) => {
         set({ isLoading: true });
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+            const response = await api.post<{
+                access_token: string;
+                token_type: string;
+                user: User;
+            }>("/auth/login", new URLSearchParams({
+                username: email,
+                password: password,
+            }), {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            });
 
-        // Initialize data store if not already initialized
-        const dataStore = useDataStore.getState();
-        if (!dataStore.isInitialized) {
-            dataStore.initialize();
-        }
-
-        // Demo accounts for login (hardcoded for reliability)
-        const now = new Date();
-        const demoAccounts: User[] = [
-            {
-                id: "super-admin-001",
-                email: "super.admin@edu.id",
-                name: "Super Admin",
-                role: "super_admin",
-                isActive: true,
-                createdAt: now,
-                updatedAt: now,
-            },
-            {
-                id: "admin-dinas-001",
-                email: "admin.bandung@edu.id",
-                name: "Admin Dinas Bandung",
-                role: "admin_dinas",
-                isActive: true,
-                createdAt: now,
-                updatedAt: now,
-            },
-            {
-                id: "admin-sekolah-001",
-                email: "admin.sdn1.sukajadi@edu.id",
-                name: "Admin SDN 1 Sukajadi",
-                role: "admin_sekolah",
-                isActive: true,
-                createdAt: now,
-                updatedAt: now,
-            },
-            {
-                id: "siswa-001",
-                email: "ahmad.pratama@gmail.com",
-                name: "Ahmad Pratama",
-                role: "siswa",
-                isActive: true,
-                createdAt: now,
-                updatedAt: now,
-            },
-        ];
-
-        // Check demo accounts first, then data store users
-        let user = demoAccounts.find((u) => u.email.toLowerCase() === email.toLowerCase());
-
-        if (!user) {
-            const updatedStore = useDataStore.getState();
-            user = updatedStore.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-        }
-
-        if (user && password === "password123") {
-            set({ user, isAuthenticated: true, isLoading: false });
-            return true;
+            if (response.access_token) {
+                // In a real app, we might use cookies or localStorage
+                localStorage.setItem("spmb_token", response.access_token);
+                set({
+                    user: response.user,
+                    isAuthenticated: true,
+                    isLoading: false
+                });
+                return true;
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
         }
 
         set({ isLoading: false });
@@ -105,11 +73,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     logout: () => {
+        localStorage.removeItem("spmb_token");
         set({ user: null, isAuthenticated: false });
     },
 
     setUser: (user: User) => {
         set({ user, isAuthenticated: true });
+    },
+
+    checkAuth: async () => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("spmb_token") : null;
+        if (!token) {
+            set({ isAuthenticated: false, user: null });
+            return;
+        }
+
+        try {
+            const user = await api.get<User>("/auth/me");
+            set({ user, isAuthenticated: true });
+        } catch (error) {
+            console.error("Auth check failed:", error);
+            localStorage.removeItem("spmb_token");
+            set({ isAuthenticated: false, user: null });
+        }
     },
 }));
 
@@ -127,7 +113,7 @@ interface DataState extends DummyDataStore {
     addSiswa: (siswa: Siswa) => void;
 
     // Getters
-    getSekolahByDinas: (dinasId: string) => Sekolah[];
+    getSekolahByDinas: (dinas_id: string) => Sekolah[];
     getSekolahById: (id: string) => Sekolah | undefined;
     getDinasById: (id: string) => Dinas | undefined;
     getUserByEmail: (email: string) => User | undefined;
@@ -168,16 +154,59 @@ export const useDataStore = create<DataState>((set, get) => ({
     pengumuman: [],
     berita: [],
 
-    initialize: () => {
+    initialize: async () => {
         if (get().isInitialized) return;
 
         set({ isLoading: true });
-        const data = generateCompleteDataStore();
-        set({
-            ...data,
-            isInitialized: true,
-            isLoading: false,
-        });
+        try {
+            // 1. Fetch Public Data (No Auth Required)
+            const [schools, dinasList, jalurList, activeTahun, pengumumanList, beritaList] = await Promise.all([
+                api.get<Sekolah[]>("/sekolah/"),
+                api.get<Dinas[]>("/dinas/"),
+                api.get<Jalur[]>("/config/jalur"),
+                api.get<TahunAjaran>("/config/tahun-ajaran/active"),
+                api.get<Pengumuman[]>("/common/pengumuman"),
+                api.get<Berita[]>("/common/berita"),
+            ]);
+
+            set({
+                sekolah: schools,
+                dinas: dinasList,
+                jalur: jalurList,
+                tahunAjaran: activeTahun,
+                pengumuman: pengumumanList,
+                berita: beritaList,
+            });
+
+            // 2. Fetch User-Specific Data if Authenticated
+            const token = typeof window !== "undefined" ? localStorage.getItem("spmb_token") : null;
+            if (token) {
+                try {
+                    const pendaftaranList = await api.get<Pendaftaran[]>("/pendaftaran/");
+                    set({ pendaftaran: pendaftaranList });
+                } catch (err) {
+                    console.warn("Failed to fetch protected data, session might have expired.");
+                    localStorage.removeItem("spmb_token");
+                }
+            } else {
+                // Fallback to empty if not logged in
+                set({ pendaftaran: [] });
+            }
+
+            set({
+                isInitialized: true,
+                isLoading: false,
+            });
+        } catch (error) {
+            console.error("Failed to initialize public data from API:", error);
+            // Fallback to dummy data on error for better dev experience
+            const data = generateCompleteDataStore();
+            set({
+                ...data,
+                isInitialized: true,
+                isLoading: false,
+            });
+        }
     },
 
     addUser: (user: User) => {
@@ -196,8 +225,8 @@ export const useDataStore = create<DataState>((set, get) => ({
         return get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     },
 
-    getSekolahByDinas: (dinasId: string) => {
-        return get().sekolah.filter((s) => s.dinasId === dinasId);
+    getSekolahByDinas: (dinas_id: string) => {
+        return get().sekolah.filter((s) => s.dinas_id === dinas_id);
     },
 
     getSekolahById: (id: string) => {
@@ -228,8 +257,8 @@ export const useDataStore = create<DataState>((set, get) => ({
         return get().orangTua.filter((o) => o.siswaId === siswaId);
     },
 
-    getStatsDinas: (dinasId: string) => {
-        const sekolahList = get().sekolah.filter((s) => s.dinasId === dinasId);
+    getStatsDinas: (dinas_id: string) => {
+        const sekolahList = get().sekolah.filter((s) => s.dinas_id === dinas_id);
         const sekolahIds = sekolahList.map((s) => s.id);
         const pendaftaranList = get().pendaftaran.filter((p) => sekolahIds.includes(p.sekolahId));
 

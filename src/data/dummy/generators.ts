@@ -24,8 +24,8 @@ import type {
 // Helper Functions
 // ============================================
 
-function randomDate(start: Date, end: Date): Date {
-    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+function randomDate(start: Date, end: Date): string {
+    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString();
 }
 
 function randomElement<T>(arr: T[]): T {
@@ -84,17 +84,17 @@ export function generateDummyDinas(count: number = 5): Dinas[] {
             telepon: `022-${randomNumber(1000000, 9999999)}`,
             email: `dinas.pendidikan@${kabupaten.toLowerCase().replace(/\s/g, "")}.go.id`,
             website: `https://disdik.${kabupaten.toLowerCase().replace(/\s/g, "")}.go.id`,
-            logoDinas: "/images/logo-dinas.png",
-            logoKabupaten: "/images/logo-kabupaten.png",
-            kepalaDinas: `Dr. ${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, M.Pd`,
-            nipKepalaDinas: `19${randomNumber(60, 80)}${randomNumber(10, 12)}${randomNumber(10, 28)}${randomNumber(100000, 999999)}`,
-            createdAt: new Date("2024-01-01"),
-            updatedAt: new Date(),
+            logo_dinas: "/images/logo-dinas.png",
+            logo_kabupaten: "/images/logo-kabupaten.png",
+            kepala_dinas: `Dr. ${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, M.Pd`,
+            nip_kepala_dinas: `19${randomNumber(60, 80)}${randomNumber(10, 12)}${randomNumber(10, 28)}${randomNumber(100000, 999999)}`,
+            created_at: new Date("2024-01-01").toISOString(),
+            updated_at: new Date().toISOString(),
         };
     });
 }
 
-export function generateDummySekolah(dinasId: string, jenjang: Jenjang, count: number = 10): Sekolah[] {
+export function generateDummySekolah(dinas_id: string, jenjang: Jenjang, count: number = 10): Sekolah[] {
     const prefix = jenjang === "SD" ? "SDN" : "SMPN";
 
     return Array.from({ length: count }, (_, i) => {
@@ -103,7 +103,7 @@ export function generateDummySekolah(dinasId: string, jenjang: Jenjang, count: n
 
         return {
             id: generateId(),
-            dinasId,
+            dinas_id,
             npsn: `${randomNumber(10000000, 99999999)}`,
             name: `${prefix} ${i + 1} ${kecamatan}`,
             jenjang,
@@ -112,18 +112,16 @@ export function generateDummySekolah(dinasId: string, jenjang: Jenjang, count: n
             kecamatan,
             telepon: `022-${randomNumber(1000000, 9999999)}`,
             email: `${prefix.toLowerCase()}${i + 1}.${kecamatan.toLowerCase().replace(/\s/g, "")}@edu.id`,
-            koordinat: {
-                lat: -6.9 + Math.random() * 0.2,
-                lng: 107.5 + Math.random() * 0.2,
-            },
+            lat: -6.9 + Math.random() * 0.2,
+            lng: 107.5 + Math.random() * 0.2,
             logo: "/images/logo-sekolah.png",
-            kepalaSekolah: `${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, S.Pd`,
-            nipKepalaSekolah: `19${randomNumber(65, 85)}${randomNumber(10, 12)}${randomNumber(10, 28)}${randomNumber(100000, 999999)}`,
-            ketuaSpmb: `${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, S.Pd`,
+            kepala_sekolah: `${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, S.Pd`,
+            nip_kepala_sekolah: `19${randomNumber(65, 85)}${randomNumber(10, 12)}${randomNumber(10, 28)}${randomNumber(100000, 999999)}`,
+            ketua_spmb: `${randomElement(NAMA_DEPAN)} ${randomElement(NAMA_BELAKANG)}, S.Pd`,
             akreditasi: randomElement(["A", "A", "A", "B", "B"]),
             status: randomElement(["negeri", "negeri", "negeri", "swasta"]) as "negeri" | "swasta",
-            createdAt: new Date("2024-01-01"),
-            updatedAt: new Date(),
+            created_at: new Date("2024-01-01").toISOString(),
+            updated_at: new Date().toISOString(),
         };
     });
 }
@@ -140,14 +138,14 @@ export function generateDummyJalur(): Jalur[] {
                 "Memiliki Kartu Keluarga yang masih berlaku",
                 "Usia sesuai ketentuan jenjang sekolah",
             ],
-            berkasWajib: [
+            berkas_wajib: [
                 "Kartu Keluarga",
                 "Akta Kelahiran",
                 "Ijazah/Surat Keterangan Lulus",
                 "Foto 3x4",
             ],
-            radiusZonasi: 3, // 3 km
-            isActive: true,
+            radius_zonasi: 3, // 3 km
+            is_active: true,
             order: 1,
         },
         {
@@ -160,14 +158,14 @@ export function generateDummyJalur(): Jalur[] {
                 "Prestasi diraih dalam 2 tahun terakhir",
                 "Memiliki sertifikat/piagam penghargaan",
             ],
-            berkasWajib: [
+            berkas_wajib: [
                 "Kartu Keluarga",
                 "Akta Kelahiran",
                 "Ijazah/Surat Keterangan Lulus",
                 "Sertifikat Prestasi",
                 "Foto 3x4",
             ],
-            isActive: true,
+            is_active: true,
             order: 2,
         },
         {
@@ -180,14 +178,14 @@ export function generateDummyJalur(): Jalur[] {
                 "Memiliki Kartu Indonesia Pintar (KIP)",
                 "Atau memiliki surat keterangan tidak mampu dari kelurahan",
             ],
-            berkasWajib: [
+            berkas_wajib: [
                 "Kartu Keluarga",
                 "Akta Kelahiran",
                 "Ijazah/Surat Keterangan Lulus",
                 "Kartu Indonesia Pintar / SKTM",
                 "Foto 3x4",
             ],
-            isActive: true,
+            is_active: true,
             order: 3,
         },
         {
@@ -200,14 +198,14 @@ export function generateDummyJalur(): Jalur[] {
                 "Perpindahan dilakukan dalam tahun berjalan",
                 "Alamat baru sesuai dengan wilayah sekolah tujuan",
             ],
-            berkasWajib: [
+            berkas_wajib: [
                 "Kartu Keluarga",
                 "Akta Kelahiran",
                 "Ijazah/Surat Keterangan Lulus",
                 "Surat Tugas Perpindahan",
                 "Foto 3x4",
             ],
-            isActive: true,
+            is_active: true,
             order: 4,
         },
     ];
@@ -217,13 +215,13 @@ export function generateDummyTahunAjaran(): TahunAjaran {
     return {
         id: generateId(),
         tahun: "2026/2027",
-        isActive: true,
-        tanggalMulaiPendaftaran: new Date("2026-01-15"),
-        tanggalAkhirPendaftaran: new Date("2026-02-28"),
-        tanggalSeleksi: new Date("2026-03-10"),
-        tanggalPengumuman: new Date("2026-03-15"),
-        tanggalDaftarUlang: new Date("2026-03-20"),
-        tanggalAkhirDaftarUlang: new Date("2026-03-31"),
+        is_active: true,
+        tanggal_mulai_pendaftaran: new Date("2026-01-15").toISOString(),
+        tanggal_akhir_pendaftaran: new Date("2026-02-28").toISOString(),
+        tanggal_seleksi: new Date("2026-03-10").toISOString(),
+        tanggal_pengumuman: new Date("2026-03-15").toISOString(),
+        tanggal_daftar_ulang: new Date("2026-03-20").toISOString(),
+        tanggal_akhir_daftar_ulang: new Date("2026-03-31").toISOString(),
     };
 }
 
@@ -260,8 +258,8 @@ export function generateDummySiswa(count: number = 100): Siswa[] {
             email: `${namaDepan.toLowerCase()}.${namaBelakang.toLowerCase()}${randomNumber(1, 99)}@gmail.com`,
             asalSekolah: `SD ${randomElement(["Negeri", "Swasta"])} ${randomNumber(1, 20)} ${randomElement(KECAMATAN)}`,
             npsnAsalSekolah: `${randomNumber(10000000, 99999999)}`,
-            createdAt: randomDate(new Date("2026-01-15"), new Date("2026-02-15")),
-            updatedAt: new Date(),
+            created_at: randomDate(new Date("2026-01-15"), new Date("2026-02-15")),
+            updated_at: new Date().toISOString(),
         };
     });
 }
@@ -318,15 +316,15 @@ export function generateDummyPendaftaran(
         sekolahId,
         jalurId,
         tahunAjaranId,
-        noPendaftaran: `SPMB-${new Date().getFullYear()}-${generateShortId().toUpperCase()}`,
+        no_pendaftaran: `SPMB-${new Date().getFullYear()}-${generateShortId().toUpperCase()}`,
         status,
-        jarakKeSekolah: Math.random() * 5,
-        nilaiRata: randomNumber(70, 100),
-        skorZonasi: randomNumber(0, 100),
-        createdAt: randomDate(new Date("2026-01-15"), new Date("2026-02-15")),
-        updatedAt: new Date(),
-        submittedAt: status !== "draft" ? randomDate(new Date("2026-01-20"), new Date("2026-02-20")) : undefined,
-        verifiedAt: ["terverifikasi", "diterima", "ditolak"].includes(status)
+        jarak_ke_sekolah: Math.random() * 5,
+        nilai_rata: randomNumber(70, 100),
+        skor_zonasi: randomNumber(0, 100),
+        created_at: randomDate(new Date("2026-01-15"), new Date("2026-02-15")),
+        updated_at: new Date().toISOString(),
+        submitted_at: status !== "draft" ? randomDate(new Date("2026-01-20"), new Date("2026-02-20")) : undefined,
+        verified_at: ["terverifikasi", "diterima", "ditolak"].includes(status)
             ? randomDate(new Date("2026-02-15"), new Date("2026-02-28"))
             : undefined,
     };
@@ -352,7 +350,7 @@ export function generateDummyPengumuman(dinasId?: string, sekolahId?: string, co
         publishedAt: randomDate(new Date("2026-01-01"), new Date()),
         createdBy: generateId(),
         createdAt: randomDate(new Date("2026-01-01"), new Date()),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
     }));
 }
 
@@ -380,7 +378,7 @@ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu 
         publishedAt: randomDate(new Date("2026-01-01"), new Date()),
         createdBy: generateId(),
         createdAt: randomDate(new Date("2026-01-01"), new Date()),
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
     }));
 }
 
@@ -395,10 +393,10 @@ export function generateDummyUser(role: UserRole, name?: string): User {
         name: defaultName,
         role,
         phone: `08${randomNumber(100000000, 999999999)}`,
-        createdAt: new Date("2024-01-01"),
-        updatedAt: new Date(),
-        lastLoginAt: randomDate(new Date("2026-01-01"), new Date()),
-        isActive: true,
+        created_at: new Date("2024-01-01").toISOString(),
+        updated_at: new Date().toISOString(),
+        last_login_at: randomDate(new Date("2026-01-01"), new Date()),
+        is_active: true,
     };
 }
 
