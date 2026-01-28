@@ -21,21 +21,25 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Badge, Modal, 
 import { CardSkeleton, TableSkeleton } from "@/components/skeletons";
 import { useDataStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { useToastStore } from "@/lib/toast-store";
 
 // ============================================
 // Types
 // ============================================
 
-interface DinasData {
+export interface DinasData {
     id: string;
-    nama: string;
+    name: string;
     kabupaten: string;
     provinsi: string;
     email: string;
     telepon: string;
-    jumlahSekolah: number;
-    jumlahAdmin: number;
-    status: "aktif" | "nonaktif";
+    alamat: string;
+    kepala_dinas: string;
+    nip_kepala_dinas: string;
+    website?: string;
+    created_at: string;
 }
 
 // ============================================
@@ -47,7 +51,7 @@ function DinasDetailModal({
     onClose,
     dinas,
 }: {
-    isOpen: boolean;
+    isOpen,
     onClose: () => void;
     dinas: DinasData | null;
 }) {
@@ -61,11 +65,8 @@ function DinasDetailModal({
                         <Home className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-gray-900">{dinas.nama}</h3>
+                        <h3 className="font-semibold text-gray-900">{dinas.name}</h3>
                         <p className="text-sm text-gray-500">{dinas.kabupaten}, {dinas.provinsi}</p>
-                        <Badge variant={dinas.status === "aktif" ? "success" : "secondary"} size="sm" className="mt-1">
-                            {dinas.status}
-                        </Badge>
                     </div>
                 </div>
 
@@ -78,22 +79,24 @@ function DinasDetailModal({
                         <p className="text-xs text-gray-400">Telepon</p>
                         <p className="text-sm font-medium">{dinas.telepon}</p>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-xl">
-                        <p className="text-xs text-gray-400">Jumlah Sekolah</p>
-                        <p className="text-sm font-medium">{dinas.jumlahSekolah} Sekolah</p>
+                    <div className="p-3 bg-gray-50 rounded-xl col-span-2">
+                        <p className="text-xs text-gray-400">Alamat</p>
+                        <p className="text-sm font-medium">{dinas.alamat}</p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl">
-                        <p className="text-xs text-gray-400">Admin Terdaftar</p>
-                        <p className="text-sm font-medium">{dinas.jumlahAdmin} Admin</p>
+                        <p className="text-xs text-gray-400">Kepala Dinas</p>
+                        <p className="text-sm font-medium">{dinas.kepala_dinas}</p>
+                        <p className="text-xs text-gray-500">NIP: {dinas.nip_kepala_dinas}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                        <p className="text-xs text-gray-400">Website</p>
+                        <p className="text-sm font-medium">{dinas.website || "-"}</p>
                     </div>
                 </div>
 
                 <div className="flex gap-2 pt-4">
                     <Button variant="outline" onClick={onClose} className="flex-1">
                         Tutup
-                    </Button>
-                    <Button className="flex-1" leftIcon={<Edit className="h-4 w-4" />}>
-                        Edit Dinas
                     </Button>
                 </div>
             </div>
@@ -109,24 +112,139 @@ function DinasFormModal({
     isOpen,
     onClose,
     dinas,
+    onSuccess,
 }: {
     isOpen: boolean;
     onClose: () => void;
     dinas?: DinasData | null;
+    onSuccess: () => void;
 }) {
+    const { success, error } = useToastStore();
+    const [isLoading, setIsLoading] = useState(false);
+    const [formData, setFormData] = useState<any>({
+        name: "",
+        kabupaten: "",
+        provinsi: "",
+        alamat: "",
+        telepon: "",
+        email: "",
+        kepala_dinas: "",
+        nip_kepala_dinas: "",
+        website: ""
+    });
+
+    useEffect(() => {
+        if (dinas) {
+            setFormData({
+                name: dinas.name,
+                kabupaten: dinas.kabupaten,
+                provinsi: dinas.provinsi,
+                alamat: dinas.alamat,
+                telepon: dinas.telepon,
+                email: dinas.email,
+                kepala_dinas: dinas.kepala_dinas,
+                nip_kepala_dinas: dinas.nip_kepala_dinas,
+                website: dinas.website || ""
+            });
+        } else {
+            setFormData({
+                name: "",
+                kabupaten: "",
+                provinsi: "",
+                alamat: "",
+                telepon: "",
+                email: "",
+                kepala_dinas: "",
+                nip_kepala_dinas: "",
+                website: ""
+            });
+        }
+    }, [dinas, isOpen]);
+
+    const handleSubmit = async () => {
+        setIsLoading(true);
+        try {
+            if (dinas) {
+                await api.put(`/dinas/${dinas.id}`, formData);
+                success("Dinas berhasil diperbarui!");
+            } else {
+                await api.post("/dinas/", formData);
+                success("Dinas baru berhasil ditambahkan!");
+            }
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            error(err.message || "Gagal menyimpan data dinas");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={dinas ? "Edit Dinas" : "Tambah Dinas"} size="md">
-            <div className="space-y-4">
-                <Input label="Nama Dinas" placeholder="Dinas Pendidikan..." defaultValue={dinas?.nama} />
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                <Input
+                    label="Nama Dinas"
+                    placeholder="Dinas Pendidikan..."
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
                 <div className="grid grid-cols-2 gap-4">
-                    <Input label="Kabupaten/Kota" placeholder="Kota Bandung" defaultValue={dinas?.kabupaten} />
-                    <Input label="Provinsi" placeholder="Jawa Barat" defaultValue={dinas?.provinsi} />
+                    <Input
+                        label="Kabupaten/Kota"
+                        placeholder="Kota Bandung"
+                        value={formData.kabupaten}
+                        onChange={(e) => setFormData({ ...formData, kabupaten: e.target.value })}
+                    />
+                    <Input
+                        label="Provinsi"
+                        placeholder="Jawa Barat"
+                        value={formData.provinsi}
+                        onChange={(e) => setFormData({ ...formData, provinsi: e.target.value })}
+                    />
                 </div>
-                <Input label="Email" type="email" placeholder="dinas@edu.id" defaultValue={dinas?.email} />
-                <Input label="Telepon" placeholder="022-xxxxxxx" defaultValue={dinas?.telepon} />
-                <div className="flex gap-2 pt-4">
-                    <Button variant="outline" onClick={onClose} className="flex-1">Batal</Button>
-                    <Button className="flex-1">Simpan</Button>
+                <Input
+                    label="Alamat"
+                    placeholder="Jl. Merdeka No. 1"
+                    value={formData.alamat}
+                    onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    <Input
+                        label="Email"
+                        type="email"
+                        placeholder="dinas@edu.id"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                    <Input
+                        label="Telepon"
+                        placeholder="022-xxxxxxx"
+                        value={formData.telepon}
+                        onChange={(e) => setFormData({ ...formData, telepon: e.target.value })}
+                    />
+                </div>
+                <Input
+                    label="Kepala Dinas"
+                    placeholder="Nama Lengkap"
+                    value={formData.kepala_dinas}
+                    onChange={(e) => setFormData({ ...formData, kepala_dinas: e.target.value })}
+                />
+                <Input
+                    label="NIP Kepala Dinas"
+                    placeholder="xxxxxxxxxxxxxxxxxx"
+                    value={formData.nip_kepala_dinas}
+                    onChange={(e) => setFormData({ ...formData, nip_kepala_dinas: e.target.value })}
+                />
+                <Input
+                    label="Website"
+                    placeholder="https://..."
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                />
+                <div className="flex gap-2 pt-4 sticky bottom-0 bg-white">
+                    <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>Batal</Button>
+                    <Button className="flex-1" onClick={handleSubmit} isLoading={isLoading}>Simpan</Button>
                 </div>
             </div>
         </Modal>
@@ -138,28 +256,55 @@ function DinasFormModal({
 // ============================================
 
 export default function DinasPage() {
-    const { initialize, isInitialized, isLoading } = useDataStore();
+    const { initialize, isInitialized } = useDataStore();
+    const { success, error } = useToastStore();
     const [search, setSearch] = useState("");
+    const [dinasList, setDinasList] = useState<DinasData[]>([]);
+    const [stats, setStats] = useState<any>(null);
+    const [isDataLoading, setIsDataLoading] = useState(true);
     const [selectedDinas, setSelectedDinas] = useState<DinasData | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
+    const fetchData = async () => {
+        setIsDataLoading(true);
+        try {
+            const [dinasRes, statsRes] = await Promise.all([
+                api.get<DinasData[]>("/dinas/"),
+                api.get<any>("/stats/summary"),
+            ]);
+            setDinasList(dinasRes);
+            setStats(statsRes);
+        } catch (err: any) {
+            console.error("Failed to fetch dinas:", err);
+            error("Gagal mengambil data dinas");
+        } finally {
+            setIsDataLoading(false);
+        }
+    };
+
     useEffect(() => {
-        initialize();
+        initialize().then(() => {
+            fetchData();
+        });
     }, [initialize]);
 
-    const dinasList: DinasData[] = [
-        { id: "1", nama: "Dinas Pendidikan Kota Bandung", kabupaten: "Kota Bandung", provinsi: "Jawa Barat", email: "disdik@bandung.go.id", telepon: "022-1234567", jumlahSekolah: 245, jumlahAdmin: 12, status: "aktif" },
-        { id: "2", nama: "Dinas Pendidikan Kab. Bandung", kabupaten: "Kabupaten Bandung", provinsi: "Jawa Barat", email: "disdik@bandungkab.go.id", telepon: "022-2345678", jumlahSekolah: 312, jumlahAdmin: 15, status: "aktif" },
-        { id: "3", nama: "Dinas Pendidikan Kota Cimahi", kabupaten: "Kota Cimahi", provinsi: "Jawa Barat", email: "disdik@cimahi.go.id", telepon: "022-3456789", jumlahSekolah: 89, jumlahAdmin: 5, status: "aktif" },
-        { id: "4", nama: "Dinas Pendidikan Kota Sumedang", kabupaten: "Kabupaten Sumedang", provinsi: "Jawa Barat", email: "disdik@sumedang.go.id", telepon: "022-4567890", jumlahSekolah: 156, jumlahAdmin: 8, status: "nonaktif" },
-    ];
+    const handleDelete = async (id: string) => {
+        if (!confirm("Apakah Anda yakin ingin menghapus dinas ini? Semua data terkait mungkin akan terpengaruh.")) return;
+        try {
+            await api.delete(`/dinas/${id}`);
+            success("Dinas berhasil dihapus!");
+            fetchData();
+        } catch (err: any) {
+            error(err.message || "Gagal menghapus dinas");
+        }
+    };
 
     const filteredDinas = dinasList.filter((d) =>
-        d.nama.toLowerCase().includes(search.toLowerCase()) || d.kabupaten.toLowerCase().includes(search.toLowerCase())
+        d.name.toLowerCase().includes(search.toLowerCase()) || d.kabupaten.toLowerCase().includes(search.toLowerCase())
     );
 
-    if (!isInitialized || isLoading) {
+    if (!isInitialized || isDataLoading) {
         return (
             <DashboardLayout>
                 <div className="space-y-6">
@@ -187,10 +332,10 @@ export default function DinasPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-4">
                     {[
-                        { label: "Total Dinas", value: "45", color: "bg-blue-500", icon: Home },
-                        { label: "Aktif", value: "42", color: "bg-green-500", icon: Home },
-                        { label: "Total Sekolah", value: "1,245", color: "bg-purple-500", icon: School },
-                        { label: "Total Admin", value: "156", color: "bg-amber-500", icon: Users },
+                        { label: "Total Dinas", value: stats?.total_dinas || 0, color: "bg-blue-500", icon: Home },
+                        { label: "Aktif", value: stats?.active_dinas || 0, color: "bg-green-500", icon: Home },
+                        { label: "Total Sekolah", value: stats?.total_sekolah || 0, color: "bg-purple-500", icon: School },
+                        { label: "Total Siswa", value: stats?.total_siswa || 0, color: "bg-amber-500", icon: Users },
                     ].map((stat, index) => (
                         <motion.div
                             key={stat.label}
@@ -229,15 +374,15 @@ export default function DinasPage() {
                                     <tr>
                                         <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Dinas</th>
                                         <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Lokasi</th>
-                                        <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Sekolah</th>
-                                        <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Telepon</th>
                                         <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredDinas.map((dinas, index) => (
+                                    {filteredDinas.map((d, index) => (
                                         <motion.tr
-                                            key={dinas.id}
+                                            key={d.id}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.05 }}
@@ -249,25 +394,24 @@ export default function DinasPage() {
                                                         <Home className="h-5 w-5 text-primary" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-gray-900">{dinas.nama}</p>
-                                                        <p className="text-xs text-gray-500">{dinas.email}</p>
+                                                        <p className="font-medium text-gray-900">{d.name}</p>
+                                                        <p className="text-xs text-gray-500">{d.provinsi}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-sm text-gray-600">{dinas.kabupaten}</td>
-                                            <td className="py-3 px-4 text-sm text-gray-600">{dinas.jumlahSekolah}</td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={dinas.status === "aktif" ? "success" : "secondary"} size="sm" dot>
-                                                    {dinas.status}
-                                                </Badge>
-                                            </td>
+                                            <td className="py-3 px-4 text-sm text-gray-600">{d.kabupaten}</td>
+                                            <td className="py-3 px-4 text-sm text-gray-600">{d.email}</td>
+                                            <td className="py-3 px-4 text-sm text-gray-600">{d.telepon}</td>
                                             <td className="py-3 px-4">
                                                 <div className="flex gap-1">
-                                                    <Button variant="ghost" size="sm" onClick={() => { setSelectedDinas(dinas); setIsDetailOpen(true); }}>
-                                                        <Eye className="h-4 w-4" />
+                                                    <Button variant="ghost" size="sm" onClick={() => { setSelectedDinas(d); setIsDetailOpen(true); }}>
+                                                        <Eye className="h-4 w-4 text-blue-500" />
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" onClick={() => { setSelectedDinas(dinas); setIsFormOpen(true); }}>
-                                                        <Edit className="h-4 w-4" />
+                                                    <Button variant="ghost" size="sm" onClick={() => { setSelectedDinas(d); setIsFormOpen(true); }}>
+                                                        <Edit className="h-4 w-4 text-amber-500" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDelete(d.id)}>
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -281,7 +425,12 @@ export default function DinasPage() {
             </div>
 
             <DinasDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} dinas={selectedDinas} />
-            <DinasFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} dinas={selectedDinas} />
+            <DinasFormModal
+                isOpen={isFormOpen}
+                onClose={() => setIsFormOpen(false)}
+                dinas={selectedDinas}
+                onSuccess={fetchData}
+            />
         </DashboardLayout>
     );
 }

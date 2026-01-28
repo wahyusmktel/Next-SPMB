@@ -25,12 +25,23 @@ def read_dinas(
         raise HTTPException(status_code=404, detail="Dinas not found")
     return db_dinas
 
+@router.post("/", response_model=schema_sekolah.Dinas)
+def create_dinas(
+    dinas_in: schema_sekolah.DinasCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: Any = Depends(deps.get_current_active_super_admin),
+):
+    """
+    Create a new Dinas.
+    """
+    return crud_dinas.create_dinas(db, dinas=dinas_in)
+
 @router.put("/{dinas_id}", response_model=schema_sekolah.Dinas)
 def update_dinas(
     dinas_id: str,
     dinas_in: schema_sekolah.DinasUpdate,
     db: Session = Depends(deps.get_db),
-    current_user: Any = Depends(deps.get_current_user),
+    current_user: Any = Depends(deps.get_current_active_super_admin),
 ):
     """
     Update Dinas information.
@@ -38,4 +49,21 @@ def update_dinas(
     db_dinas = crud_dinas.update_dinas(db, dinas_id=dinas_id, dinas_in=dinas_in)
     if not db_dinas:
         raise HTTPException(status_code=404, detail="Dinas not found")
+    return db_dinas
+
+@router.delete("/{dinas_id}", response_model=schema_sekolah.Dinas)
+def delete_dinas(
+    dinas_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: Any = Depends(deps.get_current_active_super_admin),
+):
+    """
+    Delete a Dinas.
+    """
+    db_dinas = crud_dinas.get_dinas(db, dinas_id=dinas_id)
+    if not db_dinas:
+        raise HTTPException(status_code=404, detail="Dinas not found")
+    
+    db.delete(db_dinas)
+    db.commit()
     return db_dinas

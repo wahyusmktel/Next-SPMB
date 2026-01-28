@@ -16,9 +16,23 @@ def read_siswa_list(
     current_user: User = Depends(deps.get_current_user),
 ):
     """
-    Retrieve siswa list. (Admin only ideally, but keeping it open for now)
+    Retrieve siswa list filtered by user role.
     """
-    return crud_siswa.get_siswa_list(db, skip=skip, limit=limit)
+    dinas_id = None
+    sekolah_id = None
+    
+    if current_user.role == "admin_dinas":
+        dinas_id = current_user.dinas_id
+    elif current_user.role == "admin_sekolah":
+        sekolah_id = current_user.sekolah_id
+    elif current_user.role == "siswa":
+        # Siswa should only see themselves (handled by /me, but for safety)
+        return [crud_siswa.get_siswa_by_user_id(db, user_id=current_user.id)] if current_user.id else []
+        
+    # Super Admin sees everything (dinas_id=None, sekolah_id=None)
+    return crud_siswa.get_siswa_list(
+        db, skip=skip, limit=limit, dinas_id=dinas_id, sekolah_id=sekolah_id
+    )
 
 @router.get("/me", response_model=schema_siswa.Siswa)
 def read_siswa_me(

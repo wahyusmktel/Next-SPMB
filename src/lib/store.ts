@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 interface DataState extends DummyDataStore {
     isInitialized: boolean;
     isLoading: boolean;
-    initialize: () => void;
+    initialize: () => Promise<void>;
 
     // Mutations
     addUser: (user: User) => void;

@@ -68,6 +68,26 @@ class SekolahBase(BaseModel):
 class SekolahCreate(SekolahBase):
     pass
 
+class SekolahUpdate(BaseModel):
+    dinas_id: Optional[str] = None
+    npsn: Optional[str] = None
+    name: Optional[str] = None
+    jenjang: Optional[Jenjang] = None
+    alamat: Optional[str] = None
+    kelurahan: Optional[str] = None
+    kecamatan: Optional[str] = None
+    telepon: Optional[str] = None
+    email: Optional[EmailStr] = None
+    website: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    logo: Optional[str] = None
+    kepala_sekolah: Optional[str] = None
+    nip_kepala_sekolah: Optional[str] = None
+    ketua_spmb: Optional[str] = None
+    akreditasi: Optional[str] = None
+    status: Optional[str] = None
+
 class Sekolah(SekolahBase):
     id: str
     created_at: datetime

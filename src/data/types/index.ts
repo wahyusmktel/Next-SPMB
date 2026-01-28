@@ -11,6 +11,8 @@ export interface User {
     email: string;
     name: string;
     role: UserRole;
+    dinas_id?: string;
+    sekolah_id?: string;
     avatar?: string;
     phone?: string;
     created_at: string;

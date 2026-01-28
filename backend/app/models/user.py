@@ -17,6 +17,8 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
     role = Column(SQLEnum(UserRole), nullable=False)
+    dinas_id = Column(String(36), nullable=True)
+    sekolah_id = Column(String(36), nullable=True)
     avatar = Column(String(255), nullable=True)
     phone = Column(String(20), nullable=True)
     is_active = Column(Boolean, default=True)

@@ -16,9 +16,27 @@ def read_pendaftaran_list(
     current_user: User = Depends(deps.get_current_user),
 ):
     """
-    Get all pendaftaran (Admin view).
+    Get pendaftaran list filtered by user role.
     """
-    return crud_pendaftaran.get_pendaftaran_list(db, skip=skip, limit=limit)
+    dinas_id = None
+    sekolah_id = None
+    
+    if current_user.role == "admin_dinas":
+        dinas_id = current_user.dinas_id
+    elif current_user.role == "admin_sekolah":
+        sekolah_id = current_user.sekolah_id
+    elif current_user.role == "siswa":
+        # Siswa should only see their own pendaftaran
+        from app.crud import siswa as crud_siswa
+        db_siswa = crud_siswa.get_siswa_by_user_id(db, user_id=current_user.id)
+        if not db_siswa:
+            return []
+        return db.query(Pendaftaran).filter(Pendaftaran.siswa_id == db_siswa.id).offset(skip).limit(limit).all()
+    
+    # Super Admin sees everything (dinas_id=None, sekolah_id=None)
+    return crud_pendaftaran.get_pendaftaran_list(
+        db, skip=skip, limit=limit, dinas_id=dinas_id, sekolah_id=sekolah_id
+    )
 
 @router.post("/", response_model=schema_reg.Pendaftaran)
 def create_pendaftaran(

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
     Users,
@@ -21,6 +21,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@/compo
 import { StatsCardSkeleton, TableSkeleton, ChartSkeleton } from "@/components/skeletons";
 import { useDataStore, useAuthStore } from "@/lib/store";
 import { cn, formatNumber } from "@/lib/utils";
+import { api } from "@/lib/api";
 import Link from "next/link";
 
 // ============================================
@@ -388,14 +389,38 @@ function RecentTicketsCard() {
 // ============================================
 
 export default function AdminSekolahDashboard() {
-    const { initialize, isInitialized, isLoading } = useDataStore();
+    const { initialize, isInitialized } = useDataStore();
     const { user } = useAuthStore();
+    const [sekolah, setSekolah] = useState<any>(null);
+    const [stats, setStats] = useState<any>(null);
+    const [isDataLoading, setIsDataLoading] = useState(true);
+
+    const fetchData = async () => {
+        if (!user?.sekolah_id) return;
+        setIsDataLoading(true);
+        try {
+            const [statsRes, sekolahRes] = await Promise.all([
+                api.get<any>("/stats/summary"),
+                api.get<any[]>("/sekolah/"),
+            ]);
+            setStats(statsRes);
+            if (sekolahRes && sekolahRes.length > 0) {
+                setSekolah(sekolahRes[0]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch dashboard data:", err);
+        } finally {
+            setIsDataLoading(false);
+        }
+    };
 
     useEffect(() => {
-        initialize();
-    }, [initialize]);
+        initialize().then(() => {
+            fetchData();
+        });
+    }, [initialize, user?.sekolah_id]);
 
-    if (!isInitialized || isLoading) {
+    if (!isInitialized || isDataLoading) {
         return (
             <DashboardLayout>
                 <div className="space-y-6">
@@ -431,7 +456,7 @@ export default function AdminSekolahDashboard() {
                         Dashboard Admin Sekolah
                     </h1>
                     <p className="text-gray-500 mt-1">
-                        SMPN 1 Sukajadi • Tahun Ajaran 2026/2027
+                        {sekolah?.name || "Nama Sekolah"} • NPSN: {sekolah?.npsn || "-"} • Tahun Ajaran 2026/2027
                     </p>
                 </motion.div>
 
@@ -444,27 +469,25 @@ export default function AdminSekolahDashboard() {
                 >
                     <StatsCard
                         title="Total Pendaftar"
-                        value={118}
+                        value={stats?.total_pendaftaran || 0}
                         icon={Users}
-                        trend={{ value: 12, isUp: true }}
                         color="primary"
                     />
                     <StatsCard
-                        title="Terverifikasi"
-                        value={85}
+                        title="Total Siswa"
+                        value={stats?.total_siswa || 0}
                         icon={UserCheck}
-                        description="72% dari total"
                         color="success"
                     />
                     <StatsCard
                         title="Menunggu Verifikasi"
-                        value={28}
+                        value={0}
                         icon={Clock}
                         color="warning"
                     />
                     <StatsCard
-                        title="Ditolak"
-                        value={5}
+                        title="Pesan/Tiket"
+                        value={0}
                         icon={XCircle}
                         color="error"
                     />

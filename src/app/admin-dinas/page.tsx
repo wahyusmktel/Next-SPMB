@@ -21,6 +21,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Input } from "
 import { StatsCardSkeleton, TableSkeleton, ChartSkeleton } from "@/components/skeletons";
 import { useDataStore, useAuthStore } from "@/lib/store";
 import { cn, formatNumber } from "@/lib/utils";
+import { api } from "@/lib/api";
 import Link from "next/link";
 
 // ============================================
@@ -84,16 +85,8 @@ function StatsCard({ title, value, icon: Icon, description, trend, color }: Stat
 // Schools Table
 // ============================================
 
-function SchoolsTableCard() {
+function SchoolsTableCard({ schools }: { schools: any[] }) {
     const [searchQuery, setSearchQuery] = useState("");
-
-    const schools = [
-        { id: 1, name: "SMPN 1 Sukajadi", jenjang: "SMP", pendaftar: 118, kuota: 250, status: "active" },
-        { id: 2, name: "SMPN 2 Coblong", jenjang: "SMP", pendaftar: 95, kuota: 200, status: "active" },
-        { id: 3, name: "SDN 1 Pasteur", jenjang: "SD", pendaftar: 78, kuota: 150, status: "active" },
-        { id: 4, name: "SDN 3 Cipaganti", jenjang: "SD", pendaftar: 62, kuota: 120, status: "active" },
-        { id: 5, name: "SMPN 5 Lengkong", jenjang: "SMP", pendaftar: 145, kuota: 280, status: "active" },
-    ];
 
     const filteredSchools = schools.filter((s) =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -152,20 +145,20 @@ function SchoolsTableCard() {
                                                 {school.jenjang}
                                             </Badge>
                                         </td>
-                                        <td className="py-4 text-gray-700">{formatNumber(school.pendaftar)}</td>
-                                        <td className="py-4 text-gray-500">{formatNumber(school.kuota)}</td>
+                                        <td className="py-4 text-gray-700">{formatNumber(school.total_pendaftar || 0)}</td>
+                                        <td className="py-4 text-gray-500">{formatNumber(school.kuota || 0)}</td>
                                         <td className="py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                                                     <div
                                                         className={cn(
                                                             "h-full rounded-full",
-                                                            progress >= 80 ? "bg-red-500" : progress >= 50 ? "bg-amber-500" : "bg-green-500"
+                                                            (school.total_pendaftar / school.kuota) * 100 >= 80 ? "bg-red-500" : (school.total_pendaftar / school.kuota) * 100 >= 50 ? "bg-amber-500" : "bg-green-500"
                                                         )}
-                                                        style={{ width: `${Math.min(progress, 100)}%` }}
+                                                        style={{ width: `${Math.min((school.total_pendaftar / school.kuota) * 100, 100)}%` }}
                                                     />
                                                 </div>
-                                                <span className="text-xs text-gray-500">{progress}%</span>
+                                                <span className="text-xs text-gray-500">{Math.round((school.total_pendaftar / (school.kuota || 1)) * 100)}%</span>
                                             </div>
                                         </td>
                                         <td className="py-4">
@@ -289,7 +282,7 @@ function JalurDistributionCard() {
                                 );
                                 acc.offset += strokeDasharray;
                                 return acc;
-                            }, { offset: 0, elements: [] as JSX.Element[] }).elements}
+                            }, { offset: 0, elements: [] as React.ReactElement[] }).elements}
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
@@ -361,14 +354,39 @@ function QuickActionsCard() {
 // ============================================
 
 export default function AdminDinasDashboard() {
-    const { initialize, isInitialized, isLoading } = useDataStore();
+    const { initialize, isInitialized } = useDataStore();
     const { user } = useAuthStore();
+    const [dinas, setDinas] = useState<any>(null);
+    const [stats, setStats] = useState<any>(null);
+    const [schools, setSchools] = useState<any[]>([]);
+    const [isDataLoading, setIsDataLoading] = useState(true);
+
+    const fetchData = async () => {
+        if (!user?.dinas_id) return;
+        setIsDataLoading(true);
+        try {
+            const [dinasRes, statsRes, schoolsRes] = await Promise.all([
+                api.get<any>(`/dinas/${user.dinas_id}`),
+                api.get<any>("/stats/summary"),
+                api.get<any[]>("/sekolah/"),
+            ]);
+            setDinas(dinasRes);
+            setStats(statsRes);
+            setSchools(schoolsRes);
+        } catch (err) {
+            console.error("Failed to fetch dashboard data:", err);
+        } finally {
+            setIsDataLoading(false);
+        }
+    };
 
     useEffect(() => {
-        initialize();
-    }, [initialize]);
+        initialize().then(() => {
+            fetchData();
+        });
+    }, [initialize, user?.dinas_id]);
 
-    if (!isInitialized || isLoading) {
+    if (!isInitialized || isDataLoading) {
         return (
             <DashboardLayout>
                 <div className="space-y-6">
@@ -406,7 +424,7 @@ export default function AdminDinasDashboard() {
                             Dashboard Admin Dinas
                         </h1>
                         <p className="text-gray-500 mt-1">
-                            Dinas Pendidikan Kabupaten Bandung • Tahun Ajaran 2026/2027
+                            {dinas?.name || "Dinas Pendidikan"} • {dinas?.kabupaten || "Kabupaten"} • Tahun Ajaran 2026/2027
                         </p>
                     </div>
                     <Button rightIcon={<Download className="h-4 w-4" />}>
@@ -423,28 +441,25 @@ export default function AdminDinasDashboard() {
                 >
                     <StatsCard
                         title="Total Sekolah"
-                        value={45}
+                        value={stats?.total_sekolah || 0}
                         icon={School}
-                        description="25 SD • 20 SMP"
                         color="primary"
                     />
                     <StatsCard
                         title="Total Pendaftar"
-                        value={1250}
+                        value={stats?.total_pendaftaran || 0}
                         icon={Users}
-                        trend={{ value: 15, isUp: true }}
                         color="secondary"
                     />
                     <StatsCard
-                        title="Terverifikasi"
-                        value={892}
+                        title="Total Siswa"
+                        value={stats?.total_siswa || 0}
                         icon={FileText}
-                        description="71% dari total"
                         color="success"
                     />
                     <StatsCard
-                        title="Menunggu"
-                        value={358}
+                        title="Pesan/Tiket"
+                        value={0}
                         icon={BarChart3}
                         color="warning"
                     />
@@ -459,7 +474,7 @@ export default function AdminDinasDashboard() {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-2 space-y-6"
                     >
-                        <SchoolsTableCard />
+                        <SchoolsTableCard schools={schools} />
                         <RegistrationChartCard />
                     </motion.div>
 

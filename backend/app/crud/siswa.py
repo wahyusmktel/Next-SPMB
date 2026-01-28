@@ -21,5 +21,14 @@ def create_siswa(db: Session, siswa_data: dict, user_id: str):
     db.refresh(db_siswa)
     return db_siswa
 
-def get_siswa_list(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Siswa).offset(skip).limit(limit).all()
+from typing import Optional
+from app.models.pendaftaran import Pendaftaran
+from app.models.sekolah import Sekolah
+
+def get_siswa_list(db: Session, skip: int = 0, limit: int = 100, dinas_id: Optional[str] = None, sekolah_id: Optional[str] = None):
+    query = db.query(Siswa)
+    if sekolah_id:
+        query = query.join(Pendaftaran).filter(Pendaftaran.sekolah_id == sekolah_id)
+    elif dinas_id:
+        query = query.join(Pendaftaran).join(Sekolah).filter(Sekolah.dinas_id == dinas_id)
+    return query.offset(skip).limit(limit).all()

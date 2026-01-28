@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
     Building2,
@@ -20,6 +20,7 @@ import { StatsCardSkeleton, TableSkeleton } from "@/components/skeletons";
 import { useDataStore, useAuthStore } from "@/lib/store";
 import { cn, formatNumber } from "@/lib/utils";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 // ============================================
 // Stats Card Component
@@ -82,14 +83,13 @@ function StatsCard({ title, value, icon: Icon, description, trend, color }: Stat
 // Dinas Table
 // ============================================
 
-function DinasTableCard() {
-    const dinasData = [
-        { id: 1, name: "Dinas Pendidikan Kab. Bandung", sekolah: 45, pendaftar: 1250, progress: 72 },
-        { id: 2, name: "Dinas Pendidikan Kab. Bogor", sekolah: 52, pendaftar: 1480, progress: 68 },
-        { id: 3, name: "Dinas Pendidikan Kab. Bekasi", sekolah: 38, pendaftar: 980, progress: 54 },
-        { id: 4, name: "Dinas Pendidikan Kab. Cirebon", sekolah: 41, pendaftar: 1120, progress: 61 },
-        { id: 5, name: "Dinas Pendidikan Kab. Garut", sekolah: 35, pendaftar: 890, progress: 48 },
-    ];
+function DinasTableCard({ data }: { data: any[] }) {
+    const [search, setSearch] = useState("");
+
+    const filteredDinas = data.filter(d =>
+        d.name.toLowerCase().includes(search.toLowerCase()) ||
+        d.kabupaten?.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <Card variant="elevated">
@@ -101,12 +101,11 @@ function DinasTableCard() {
                         <input
                             type="text"
                             placeholder="Cari dinas..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             className="h-9 pl-9 pr-4 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-primary"
                         />
                     </div>
-                    <Button variant="outline" size="sm">
-                        Filter
-                    </Button>
                 </div>
             </CardHeader>
             <CardContent className="pt-0">
@@ -115,14 +114,14 @@ function DinasTableCard() {
                         <thead>
                             <tr className="text-left text-xs text-gray-500 border-b">
                                 <th className="pb-3 font-medium">Dinas</th>
-                                <th className="pb-3 font-medium">Sekolah</th>
-                                <th className="pb-3 font-medium">Pendaftar</th>
-                                <th className="pb-3 font-medium">Progress</th>
+                                <th className="pb-3 font-medium">Kabupaten/Kota</th>
+                                <th className="pb-3 font-medium">Provinsi</th>
+                                <th className="pb-3 font-medium">Email</th>
                                 <th className="pb-3 font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm">
-                            {dinasData.map((dinas) => (
+                            {filteredDinas.map((dinas) => (
                                 <tr key={dinas.id} className="border-b border-gray-50 last:border-0">
                                     <td className="py-4">
                                         <div className="flex items-center gap-3">
@@ -133,30 +132,13 @@ function DinasTableCard() {
                                         </div>
                                     </td>
                                     <td className="py-4">
-                                        <div className="flex items-center gap-2">
-                                            <School className="h-4 w-4 text-gray-400" />
-                                            <span>{dinas.sekolah}</span>
-                                        </div>
+                                        <span>{dinas.kabupaten}</span>
                                     </td>
                                     <td className="py-4">
-                                        <div className="flex items-center gap-2">
-                                            <Users className="h-4 w-4 text-gray-400" />
-                                            <span>{formatNumber(dinas.pendaftar)}</span>
-                                        </div>
+                                        <span>{dinas.provinsi}</span>
                                     </td>
                                     <td className="py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={cn(
-                                                        "h-full rounded-full",
-                                                        dinas.progress >= 70 ? "bg-green-500" : dinas.progress >= 50 ? "bg-amber-500" : "bg-red-500"
-                                                    )}
-                                                    style={{ width: `${dinas.progress}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-xs text-gray-500">{dinas.progress}%</span>
-                                        </div>
+                                        <span className="text-gray-500">{dinas.email}</span>
                                     </td>
                                     <td className="py-4">
                                         <Link href={`/super-admin/dinas/${dinas.id}`}>
@@ -262,14 +244,35 @@ function QuickActionsCard() {
 // ============================================
 
 export default function SuperAdminDashboard() {
-    const { initialize, isInitialized, isLoading } = useDataStore();
+    const { initialize, isInitialized } = useDataStore();
     const { user } = useAuthStore();
+    const [stats, setStats] = React.useState<any>(null);
+    const [dinasList, setDinasList] = React.useState<any[]>([]);
+    const [isDashboardLoading, setIsDashboardLoading] = React.useState(true);
+
+    const fetchDashboardData = async () => {
+        setIsDashboardLoading(true);
+        try {
+            const [statsRes, dinasRes] = await Promise.all([
+                api.get<any>("/stats/summary"),
+                api.get<any[]>("/dinas/"),
+            ]);
+            setStats(statsRes);
+            setDinasList(dinasRes);
+        } catch (error) {
+            console.error("Failed to fetch dashboard data:", error);
+        } finally {
+            setIsDashboardLoading(false);
+        }
+    };
 
     useEffect(() => {
-        initialize();
+        initialize().then(() => {
+            fetchDashboardData();
+        });
     }, [initialize]);
 
-    if (!isInitialized || isLoading) {
+    if (!isInitialized || isDashboardLoading) {
         return (
             <DashboardLayout>
                 <div className="space-y-6">
@@ -319,27 +322,25 @@ export default function SuperAdminDashboard() {
                 >
                     <StatsCard
                         title="Total Dinas"
-                        value={5}
+                        value={stats?.total_dinas || 0}
                         icon={Building2}
                         color="primary"
                     />
                     <StatsCard
                         title="Total Sekolah"
-                        value={211}
+                        value={stats?.total_sekolah || 0}
                         icon={School}
-                        description="126 SD • 85 SMP"
                         color="secondary"
                     />
                     <StatsCard
                         title="Total Pendaftar"
-                        value={5720}
+                        value={stats?.total_siswa || 0}
                         icon={Users}
-                        trend={{ value: 12, isUp: true }}
                         color="success"
                     />
                     <StatsCard
-                        title="Rata-rata Progress"
-                        value="61%"
+                        title="Total Pengguna"
+                        value={stats?.total_users || 0}
                         icon={BarChart3}
                         color="warning"
                     />
@@ -354,7 +355,7 @@ export default function SuperAdminDashboard() {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-2"
                     >
-                        <DinasTableCard />
+                        <DinasTableCard data={dinasList} />
                     </motion.div>
 
                     {/* Right Column */}

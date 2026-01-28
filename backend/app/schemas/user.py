@@ -7,6 +7,8 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     role: UserRole
+    dinas_id: Optional[str] = None
+    sekolah_id: Optional[str] = None
     avatar: Optional[str] = None
     phone: Optional[str] = None
     is_active: bool = True
@@ -19,6 +21,8 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     avatar: Optional[str] = None
     phone: Optional[str] = None
+    dinas_id: Optional[str] = None
+    sekolah_id: Optional[str] = None
     password: Optional[str] = None
 
 class UserInDB(UserBase):
