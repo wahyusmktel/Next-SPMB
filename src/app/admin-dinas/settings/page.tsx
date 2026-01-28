@@ -34,8 +34,8 @@ export default function SettingsPage() {
     const [isUploading, setIsUploading] = useState<string | null>(null);
 
     // Form States
-    const [dinasForm, setDinasForm] = useState<any>(null);
-    const [scheduleForm, setScheduleForm] = useState<any>(null);
+    const [dinasForm, setDinasForm] = useState<any>({});
+    const [scheduleForm, setScheduleForm] = useState<any>({});
     const [notificationForm, setNotificationForm] = useState<any>({
         email_confirmation: true,
         file_verification: true,
@@ -43,6 +43,9 @@ export default function SettingsPage() {
         re_registration_reminder: true,
         whatsapp_notif: false,
     });
+
+    const logoInputRef = React.useRef<HTMLInputElement>(null);
+    const signatureInputRef = React.useRef<HTMLInputElement>(null);
 
     const activeDinas = dinas && dinas.length > 0 ? dinas[0] : null;
 
@@ -213,18 +216,25 @@ export default function SettingsPage() {
                                                 <Image className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                                             )}
                                             <p className="text-sm text-gray-500">Logo Dinas</p>
-                                            <label className="mt-2 inline-block">
+                                            <div className="mt-2">
                                                 <input
                                                     type="file"
+                                                    ref={logoInputRef}
                                                     className="hidden"
                                                     accept="image/*"
                                                     onChange={(e) => handleFileUpload(e, 'logo')}
-                                                    disabled={isUploading === 'logo'}
                                                 />
-                                                <Button variant="outline" size="sm" className="text-xs pointer-events-none" isLoading={isUploading === 'logo'}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-xs"
+                                                    isLoading={isUploading === 'logo'}
+                                                    onClick={() => logoInputRef.current?.click()}
+                                                    type="button"
+                                                >
                                                     <Upload className="h-3 w-3 mr-2" /> {activeDinas?.logo_dinas ? 'Ganti Logo' : 'Upload Logo'}
                                                 </Button>
-                                            </label>
+                                            </div>
                                         </div>
                                         <div className="p-4 border-2 border-dashed border-gray-200 rounded-xl text-center">
                                             {activeDinas?.signature_url ? (
@@ -237,27 +247,38 @@ export default function SettingsPage() {
                                                 <Image className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                                             )}
                                             <p className="text-sm text-gray-500">Tanda Tangan Digital</p>
-                                            <label className="mt-2 inline-block">
+                                            <div className="mt-2">
                                                 <input
                                                     type="file"
+                                                    ref={signatureInputRef}
                                                     className="hidden"
                                                     accept="image/*"
                                                     onChange={(e) => handleFileUpload(e, 'signature')}
-                                                    disabled={isUploading === 'signature'}
                                                 />
-                                                <Button variant="outline" size="sm" className="text-xs pointer-events-none" isLoading={isUploading === 'signature'}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-xs"
+                                                    isLoading={isUploading === 'signature'}
+                                                    onClick={() => signatureInputRef.current?.click()}
+                                                    type="button"
+                                                >
                                                     <Upload className="h-3 w-3 mr-2" /> {activeDinas?.signature_url ? 'Ganti TTD' : 'Upload Baru'}
                                                 </Button>
-                                            </label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="flex justify-end pt-4">
                                     <Button
+                                        type="button"
                                         leftIcon={<Save className="h-4 w-4" />}
                                         onClick={async () => {
-                                            if (!activeDinas) return;
+                                            if (!activeDinas) {
+                                                error("Data Dinas tidak tersedia");
+                                                return;
+                                            }
                                             setIsSaving(true);
                                             try {
                                                 await api.put(`/dinas/${activeDinas.id}`, dinasForm);
@@ -330,9 +351,13 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="flex justify-end pt-4">
                                     <Button
+                                        type="button"
                                         leftIcon={<Save className="h-4 w-4" />}
                                         onClick={async () => {
-                                            if (!tahunAjaran) return;
+                                            if (!tahunAjaran || !tahunAjaran.id) {
+                                                error("Data Tahun Ajaran tidak tersedia");
+                                                return;
+                                            }
                                             setIsSaving(true);
                                             try {
                                                 await api.put(`/config/tahun-ajaran/${tahunAjaran.id}`, scheduleForm);
@@ -387,9 +412,13 @@ export default function SettingsPage() {
                                 ))}
                                 <div className="flex justify-end pt-4">
                                     <Button
+                                        type="button"
                                         leftIcon={<Save className="h-4 w-4" />}
                                         onClick={async () => {
-                                            if (!activeDinas) return;
+                                            if (!activeDinas) {
+                                                error("Data Dinas tidak tersedia");
+                                                return;
+                                            }
                                             setIsSaving(true);
                                             try {
                                                 await api.put(`/dinas/${activeDinas.id}`, {
