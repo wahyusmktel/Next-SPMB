@@ -309,19 +309,19 @@ function DocumentsCard() {
 function AnnouncementsCard() {
     const announcements = [
         {
-            id: 1,
+            id: "1",
             title: "Jadwal Pengumuman Hasil Seleksi",
             date: "27 Jan 2026",
             type: "info",
         },
         {
-            id: 2,
+            id: "2",
             title: "Perubahan Jadwal Daftar Ulang",
             date: "26 Jan 2026",
             type: "warning",
         },
         {
-            id: 3,
+            id: "3",
             title: "Tips Persiapan Daftar Ulang",
             date: "25 Jan 2026",
             type: "info",

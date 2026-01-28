@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     Megaphone,
@@ -42,35 +43,37 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
     const Icon = config.icon;
 
     return (
-        <motion.div
-            whileHover={{ y: -2 }}
-            className="bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-all overflow-hidden"
-        >
-            <div className="p-5">
-                <div className="flex items-start gap-4">
-                    <div className={cn("p-2.5 rounded-xl", config.color)}>
-                        <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">{announcement.title}</h4>
-                            <Badge variant="outline" size="sm" className="flex-shrink-0">
-                                {config.label}
-                            </Badge>
+        <Link href={`/siswa/pengumuman/${announcement.id}`}>
+            <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-all overflow-hidden cursor-pointer"
+            >
+                <div className="p-5">
+                    <div className="flex items-start gap-4">
+                        <div className={cn("p-2.5 rounded-xl", config.color)}>
+                            <Icon className="h-5 w-5" />
                         </div>
-                        <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-                            {announcement.content}
-                        </p>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400">{announcement.publishedAt}</span>
-                            <button className="text-xs text-primary hover:underline flex items-center gap-1">
-                                Selengkapnya <ChevronRight className="h-3 w-3" />
-                            </button>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                                <h4 className="font-semibold text-gray-900">{announcement.title}</h4>
+                                <Badge variant="outline" size="sm" className="flex-shrink-0">
+                                    {config.label}
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+                                {announcement.content}
+                            </p>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">{announcement.publishedAt}</span>
+                                <span className="text-xs text-primary hover:underline flex items-center gap-1">
+                                    Selengkapnya <ChevronRight className="h-3 w-3" />
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </motion.div>
+            </motion.div>
+        </Link>
     );
 }
 

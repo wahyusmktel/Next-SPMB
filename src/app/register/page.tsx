@@ -20,7 +20,7 @@ import { generateId } from "@/lib/uuid";
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { initialize, sekolah } = useDataStore();
+    const { initialize, sekolah, addUser, addSiswa, getUserByEmail } = useDataStore();
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -60,6 +60,8 @@ export default function RegisterPage() {
         if (!formData.email) newErrors.email = "Email harus diisi";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
             newErrors.email = "Format email tidak valid";
+        else if (getUserByEmail(formData.email))
+            newErrors.email = "Email sudah terdaftar";
         if (!formData.password) newErrors.password = "Password harus diisi";
         else if (formData.password.length < 8)
             newErrors.password = "Password minimal 8 karakter";
@@ -108,6 +110,52 @@ export default function RegisterPage() {
         setIsLoading(true);
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        const now = new Date();
+        const userId = generateId();
+        const siswaId = generateId();
+
+        // Create new user account
+        const newUser = {
+            id: userId,
+            email: formData.email,
+            name: formData.namaLengkap,
+            role: "siswa" as const,
+            phone: formData.phone,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        // Create siswa record
+        const newSiswa = {
+            id: siswaId,
+            userId: userId,
+            nisn: formData.nisn,
+            nik: "",
+            namaLengkap: formData.namaLengkap,
+            tempatLahir: formData.tempatLahir,
+            tanggalLahir: new Date(formData.tanggalLahir),
+            jenisKelamin: formData.jenisKelamin as "L" | "P",
+            agama: "Islam" as const,
+            alamat: "",
+            rt: "",
+            rw: "",
+            kelurahan: "",
+            kecamatan: "",
+            kabupaten: "",
+            provinsi: "",
+            kodePos: "",
+            email: formData.email,
+            telepon: formData.phone,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        // Save to store
+        addUser(newUser);
+        addSiswa(newSiswa);
+
         setIsLoading(false);
         setIsSuccess(true);
     };
@@ -136,10 +184,22 @@ export default function RegisterPage() {
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
                         Pendaftaran Berhasil!
                     </h2>
-                    <p className="text-gray-600 mb-8">
-                        Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan
-                        proses pendaftaran.
+                    <p className="text-gray-600 mb-4">
+                        Akun Anda telah berhasil dibuat. Gunakan kredensial berikut untuk login:
                     </p>
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                        <div className="mb-2">
+                            <span className="text-sm text-gray-500">Email:</span>
+                            <p className="font-medium text-gray-900">{formData.email}</p>
+                        </div>
+                        <div>
+                            <span className="text-sm text-gray-500">Password:</span>
+                            <p className="font-medium text-gray-900">password123</p>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-3">
+                            * Password default untuk login adalah <strong>password123</strong>
+                        </p>
+                    </div>
                     <Link href="/login">
                         <Button size="lg" className="w-full">
                             Masuk ke Akun
@@ -179,8 +239,8 @@ export default function RegisterPage() {
                             <React.Fragment key={s}>
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${step >= s
-                                            ? "bg-primary text-white"
-                                            : "bg-gray-100 text-gray-400"
+                                        ? "bg-primary text-white"
+                                        : "bg-gray-100 text-gray-400"
                                         }`}
                                 >
                                     {s}
@@ -355,8 +415,8 @@ export default function RegisterPage() {
                                                         updateForm("sekolahId", "");
                                                     }}
                                                     className={`p-4 rounded-xl border-2 text-left transition-all ${formData.jenjang === option.value
-                                                            ? "border-primary bg-primary/5"
-                                                            : "border-gray-200 hover:border-gray-300"
+                                                        ? "border-primary bg-primary/5"
+                                                        : "border-gray-200 hover:border-gray-300"
                                                         }`}
                                                 >
                                                     <div className="text-3xl mb-2">{option.icon}</div>
@@ -483,10 +543,10 @@ export default function RegisterPage() {
                             <div
                                 key={item.step}
                                 className={`flex items-center gap-4 p-4 rounded-xl transition-all ${step === item.step
-                                        ? "bg-white/20"
-                                        : step > item.step
-                                            ? "bg-white/10"
-                                            : "opacity-50"
+                                    ? "bg-white/20"
+                                    : step > item.step
+                                        ? "bg-white/10"
+                                        : "opacity-50"
                                     }`}
                             >
                                 <div

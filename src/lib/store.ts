@@ -122,10 +122,15 @@ interface DataState extends DummyDataStore {
     isLoading: boolean;
     initialize: () => void;
 
+    // Mutations
+    addUser: (user: User) => void;
+    addSiswa: (siswa: Siswa) => void;
+
     // Getters
     getSekolahByDinas: (dinasId: string) => Sekolah[];
     getSekolahById: (id: string) => Sekolah | undefined;
     getDinasById: (id: string) => Dinas | undefined;
+    getUserByEmail: (email: string) => User | undefined;
     getSiswaById: (id: string) => Siswa | undefined;
     getPendaftaranBySiswa: (siswaId: string) => Pendaftaran[];
     getPendaftaranBySekolah: (sekolahId: string) => Pendaftaran[];
@@ -173,6 +178,22 @@ export const useDataStore = create<DataState>((set, get) => ({
             isInitialized: true,
             isLoading: false,
         });
+    },
+
+    addUser: (user: User) => {
+        set((state) => ({
+            users: [...state.users, user],
+        }));
+    },
+
+    addSiswa: (siswa: Siswa) => {
+        set((state) => ({
+            siswa: [...state.siswa, siswa],
+        }));
+    },
+
+    getUserByEmail: (email: string) => {
+        return get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     },
 
     getSekolahByDinas: (dinasId: string) => {
