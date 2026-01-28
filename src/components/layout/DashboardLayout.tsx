@@ -1,31 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    GraduationCap,
     LayoutDashboard,
     FileText,
-    Bell,
+    ClipboardList,
+    Megaphone,
+    MessageSquare,
     User,
     LogOut,
+    ChevronDown,
+    Bell,
     Menu,
     X,
-    ChevronDown,
-    ClipboardList,
-    MessageSquare,
-    Settings,
-    HelpCircle,
-    Home,
     School,
-    Users,
+    Route,
     BarChart3,
-    FileSpreadsheet,
-    Megaphone,
-    Newspaper,
     Ticket,
+    Settings,
+    Newspaper,
+    HelpCircle,
+    Shield,
+    Home,
+    Users,
+    FileSpreadsheet,
+    GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore, useUIStore, useNotificationStore } from "@/lib/store";
@@ -276,12 +278,115 @@ function Header() {
     const router = useRouter();
     const { user, logout } = useAuthStore();
     const { toggleSidebar } = useUIStore();
-    const { unreadCount } = useNotificationStore();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const {
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        clearAll,
+        addNotification,
+    } = useNotificationStore();
+
+    // Seed dummy notifications if empty
+    useEffect(() => {
+        if (notifications.length === 0 && user) {
+            const seedNotifications = () => {
+                const commonNotifications = [
+                    {
+                        userId: user.id,
+                        tipe: "sistem" as const,
+                        judul: "Selamat Datang",
+                        pesan: `Selamat datang di Dashboard SPMB, ${user.name}!`,
+                    },
+                ];
+
+                const roleSpecific: Record<string, any[]> = {
+                    super_admin: [
+                        {
+                            userId: user.id,
+                            tipe: "sistem",
+                            judul: "Update Sistem",
+                            pesan: "Sistem telah diperbarui ke versi 2.0.1",
+                        },
+                        {
+                            userId: user.id,
+                            tipe: "pendaftaran",
+                            judul: "Laporan Baru",
+                            pesan: "Laporan harian nasional sudah tersedia untuk diunduh.",
+                        },
+                    ],
+                    admin_dinas: [
+                        {
+                            userId: user.id,
+                            tipe: "pendaftaran",
+                            judul: "Sekolah Baru Terdaftar",
+                            pesan: "SMPN 5 Bandung telah menyelesaikan sinkronisasi data.",
+                        },
+                        {
+                            userId: user.id,
+                            tipe: "tiket",
+                            judul: "Tiket Bantuan Baru",
+                            pesan: "Ada 5 tiket bantuan baru yang memerlukan perhatian Anda.",
+                        },
+                    ],
+                    admin_sekolah: [
+                        {
+                            userId: user.id,
+                            tipe: "pendaftaran",
+                            judul: "Pendaftaran Baru",
+                            pesan: "12 calon siswa baru telah mendaftar di jalur Zonasi.",
+                        },
+                        {
+                            userId: user.id,
+                            tipe: "verifikasi",
+                            judul: "Verifikasi Berkas",
+                            pesan: "Ada 8 berkas pendaftaran yang perlu diverifikasi segera.",
+                        },
+                    ],
+                    siswa: [
+                        {
+                            userId: user.id,
+                            tipe: "pengumuman",
+                            judul: "Jadwal Seleksi",
+                            pesan: "Jadwal seleksi tahap 1 untuk jalur Zonasi telah dibagikan.",
+                        },
+                        {
+                            userId: user.id,
+                            tipe: "pendaftaran",
+                            judul: "Status Berkas",
+                            pesan: "Berkas Akta Kelahiran Anda telah diverifikasi oleh admin sekolah.",
+                        },
+                    ],
+                };
+
+                const toAdd = [...commonNotifications, ...(roleSpecific[user.role] || [])];
+                toAdd.forEach((n) => addNotification(n));
+            };
+
+            seedNotifications();
+        }
+    }, [user, notifications.length, addNotification]);
 
     const handleLogout = () => {
         logout();
         router.push("/login");
+    };
+
+    const getNotificationIcon = (tipe: string) => {
+        switch (tipe) {
+            case "pendaftaran":
+                return <FileText className="h-4 w-4 text-blue-500" />;
+            case "verifikasi":
+                return <Shield className="h-4 w-4 text-green-500" />;
+            case "pengumuman":
+                return <Megaphone className="h-4 w-4 text-purple-500" />;
+            case "tiket":
+                return <MessageSquare className="h-4 w-4 text-orange-500" />;
+            default:
+                return <Bell className="h-4 w-4 text-gray-500" />;
+        }
     };
 
     if (!user) return null;
@@ -308,19 +413,118 @@ function Header() {
             {/* Right Side */}
             <div className="flex items-center gap-3">
                 {/* Notifications */}
-                <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Bell className="h-5 w-5 text-gray-600" />
-                    {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                            {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
-                    )}
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => {
+                            setShowNotifications(!showNotifications);
+                            setShowUserMenu(false);
+                        }}
+                        className={cn(
+                            "relative p-2 rounded-lg transition-colors",
+                            showNotifications ? "bg-gray-100" : "hover:bg-gray-100"
+                        )}
+                    >
+                        <Bell className="h-5 w-5 text-gray-600" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                                {unreadCount > 9 ? "9+" : unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <AnimatePresence>
+                        {showNotifications && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden"
+                            >
+                                <div className="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+                                    <h3 className="font-semibold text-gray-900">Notifikasi</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => markAllAsRead()}
+                                            className="text-xs text-primary hover:underline font-medium"
+                                        >
+                                            Baca Semua
+                                        </button>
+                                        <button
+                                            onClick={() => clearAll()}
+                                            className="text-xs text-red-500 hover:underline font-medium"
+                                        >
+                                            Hapus Semua
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="max-h-[70vh] overflow-y-auto">
+                                    {notifications.length > 0 ? (
+                                        notifications.map((n) => (
+                                            <div
+                                                key={n.id}
+                                                onClick={() => markAsRead(n.id)}
+                                                className={cn(
+                                                    "px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors flex gap-3",
+                                                    !n.isRead && "bg-blue-50/30"
+                                                )}
+                                            >
+                                                <div className="flex-shrink-0 mt-1">
+                                                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                                                        {getNotificationIcon(n.tipe)}
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={cn(
+                                                            "text-sm font-medium truncate",
+                                                            n.isRead ? "text-gray-700" : "text-gray-900"
+                                                        )}>
+                                                            {n.judul}
+                                                        </p>
+                                                        {!n.isRead && (
+                                                            <div className="w-2 h-2 bg-primary rounded-full" />
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                                        {n.pesan}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                        {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-12 text-center">
+                                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <Bell className="h-6 w-6 text-gray-300" />
+                                            </div>
+                                            <p className="text-sm text-gray-500 font-medium">Belum ada notifikasi</p>
+                                            <p className="text-xs text-gray-400 mt-1">Anda akan menerima kabar terbaru di sini</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {notifications.length > 0 && (
+                                    <div className="px-4 py-2 bg-gray-50 text-center border-t border-gray-100">
+                                        <button className="text-xs text-gray-500 hover:text-primary font-medium">
+                                            Lihat Semua Aktivitas
+                                        </button>
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* User Menu */}
                 <div className="relative">
                     <button
-                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        onClick={() => {
+                            setShowUserMenu(!showUserMenu);
+                            setShowNotifications(false);
+                        }}
                         className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
                     >
                         <div className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-white font-medium text-sm">
